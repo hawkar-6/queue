@@ -1,0 +1,636 @@
+{
+  "info": {
+    "name": "Laravel Batch Reports - Classroom Demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Send individually. Use an empty class-reports queue and stop any continuous worker listening to it first. Before 04 and 07: php artisan queue:work database --queue=class-reports --once. Before 05 and 12: php artisan queue:work database --queue=class-reports --stop-when-empty. Accounts and batch IDs are saved automatically."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Register owner",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('ownerEmail', 'owner-' + pm.variables.replaceIn('{{$guid}}') + '@example.test');",
+              "pm.collectionVariables.set('ownerPass', pm.variables.replaceIn('{{$guid}}'));",
+              "pm.collectionVariables.unset('ownerToken');",
+              "pm.collectionVariables.unset('reportId');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"owner\",\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{ownerPass}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "02 Login owner",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.collectionVariables.set('ownerToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{ownerPass}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "03 Submit four classes",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ownerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classes\": [\n    {\n      \"name\": \"A\",\n      \"scores\": [\n        60,\n        80,\n        100\n      ]\n    },\n    {\n      \"name\": \"B\",\n      \"scores\": [\n        70,\n        90\n      ]\n    },\n    {\n      \"name\": \"C\",\n      \"scores\": [\n        40,\n        50,\n        60\n      ]\n    },\n    {\n      \"name\": \"D\",\n      \"scores\": [\n        85,\n        95\n      ]\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 202', () => pm.response.to.have.status(202));",
+              "if (pm.response.code === 202) pm.collectionVariables.set('firstBatch', pm.response.json().batch_id);",
+              "pm.test('Batch result', () => { const r = pm.response.json(); pm.expect(r.progress).to.equal(0); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "04 Run ONE job - check 25%",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches/{{firstBatch}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches",
+            "{{firstBatch}}"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ownerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "description": "Before Send: php artisan queue:work database --queue=class-reports --once"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Batch result', () => { const r = pm.response.json(); pm.expect(r.progress).to.equal(25); pm.expect(r.completed).to.equal(1); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "05 Drain queue - check 100%",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches/{{firstBatch}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches",
+            "{{firstBatch}}"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ownerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "description": "Before Send: php artisan queue:work database --queue=class-reports --stop-when-empty"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Batch result', () => { const r = pm.response.json(); pm.expect(r.progress).to.equal(100); pm.expect(r.status).to.equal('ready'); pm.expect(r.reports[0].result.average).to.equal(80); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "06 Submit second batch",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ownerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classes\": [\n    {\n      \"name\": \"A\",\n      \"scores\": [\n        60,\n        80,\n        100\n      ]\n    },\n    {\n      \"name\": \"B\",\n      \"scores\": [\n        70,\n        90\n      ]\n    },\n    {\n      \"name\": \"C\",\n      \"scores\": [\n        40,\n        50,\n        60\n      ]\n    },\n    {\n      \"name\": \"D\",\n      \"scores\": [\n        85,\n        95\n      ]\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 202', () => pm.response.to.have.status(202));",
+              "if (pm.response.code === 202) pm.collectionVariables.set('secondBatch', pm.response.json().batch_id);",
+              "pm.test('Batch result', () => { const r = pm.response.json(); pm.expect(r.progress).to.equal(0); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "07 Run ONE job - check 25%",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches/{{secondBatch}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches",
+            "{{secondBatch}}"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ownerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "description": "Before Send: php artisan queue:work database --queue=class-reports --once"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Batch result', () => { const r = pm.response.json(); pm.expect(r.progress).to.equal(25); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "08 Register guest",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('guestEmail', 'guest-' + pm.variables.replaceIn('{{$guid}}') + '@example.test');",
+              "pm.collectionVariables.set('guestPass', pm.variables.replaceIn('{{$guid}}'));",
+              "pm.collectionVariables.unset('guestToken');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"guest\",\n  \"email\": \"{{guestEmail}}\",\n  \"password\": \"{{guestPass}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "09 Login guest",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.collectionVariables.set('guestToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{guestEmail}}\",\n  \"password\": \"{{guestPass}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "10 Guest cannot cancel",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches/{{secondBatch}}/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches",
+            "{{secondBatch}}",
+            "cancel"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{guestToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "11 Owner cancels",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches/{{secondBatch}}/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches",
+            "{{secondBatch}}",
+            "cancel"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ownerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Batch result', () => { const r = pm.response.json(); pm.expect(r.status).to.equal('cancelled'); pm.expect(r.progress).to.equal(25); pm.expect(r.reports.filter(x => x.status === 'cancelled').length).to.equal(3); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "12 Drain queue - verify preserved results",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/report-batches/{{secondBatch}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "report-batches",
+            "{{secondBatch}}"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ownerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "description": "Before Send: php artisan queue:work database --queue=class-reports --stop-when-empty"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Batch result', () => { const r = pm.response.json(); pm.expect(r.status).to.equal('cancelled'); pm.expect(r.progress).to.equal(25); pm.expect(r.reports.filter(x => x.status === 'cancelled').length).to.equal(3); pm.expect(r.reports[0].result.average).to.equal(80); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}

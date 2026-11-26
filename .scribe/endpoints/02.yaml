@@ -1,0 +1,223 @@
+name: 'Class report batches'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/report-batches
+    metadata:
+      custom: []
+      groupName: 'Class report batches'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        Submit class reports
+        Each class becomes one independent job on the class-reports queue.
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      classes:
+        custom: []
+        name: classes
+        description: 'Between 1 and 20 classes.'
+        required: true
+        example:
+          -
+            name: 'Class A'
+            scores:
+              - 60
+              - 80
+              - 100
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'classes[].name':
+        custom: []
+        name: 'classes[].name'
+        description: 'Unique class name.'
+        required: true
+        example: 'Class A'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'classes[].scores':
+        custom: []
+        name: 'classes[].scores'
+        description: 'Scores between 0 and 100.'
+        required: true
+        example:
+          - 60
+          - 80
+          - 100
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      classes:
+        -
+          name: 'Class A'
+          scores:
+            - 60
+            - 80
+            - 100
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 202
+        content: '{"batch_id":"890b38a0-301c-4959-9a28-3592c39aec40","status":"queued","total":1,"completed":0,"progress":0,"reports":[{"id":1,"class_name":"Class A","status":"queued","result":null}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/report-batches/{batch_id}'
+    metadata:
+      custom: []
+      groupName: 'Class report batches'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        Read progress and one result per class
+        Progress counts ready reports, including after cancellation.
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      batch_id:
+        custom: []
+        name: batch_id
+        description: 'Batch UUID.'
+        required: true
+        example: 890b38a0-301c-4959-9a28-3592c39aec40
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      batch_id: 890b38a0-301c-4959-9a28-3592c39aec40
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"batch_id":"890b38a0-301c-4959-9a28-3592c39aec40","status":"ready","total":1,"completed":1,"progress":100,"reports":[{"id":1,"class_name":"Class A","status":"ready","result":{"count":3,"average":80,"highest":100,"lowest":60}}]}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"message":"This action is unauthorized."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/report-batches/{batch_id}/cancel'
+    metadata:
+      custom: []
+      groupName: 'Class report batches'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        Cancel outstanding reports
+        Ready results are retained. Repeating a cancellation is safe.
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      batch_id:
+        custom: []
+        name: batch_id
+        description: 'Batch UUID.'
+        required: true
+        example: 890b38a0-301c-4959-9a28-3592c39aec40
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      batch_id: 890b38a0-301c-4959-9a28-3592c39aec40
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"batch_id":"890b38a0-301c-4959-9a28-3592c39aec40","status":"cancelled","total":1,"completed":0,"progress":0,"reports":[{"id":1,"class_name":"Class A","status":"cancelled","result":null}]}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"message":"This action is unauthorized."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 409
+        content: '{"message":"This batch has already finished."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

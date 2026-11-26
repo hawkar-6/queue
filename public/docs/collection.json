@@ -1,0 +1,398 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "http:\/\/127.0.0.1:8000"
+        }
+    ],
+    "info": {
+        "name": "Grade Reports API Documentation",
+        "_postman_id": "3ea7b7a4-5eea-499a-acd3-9b2eccc342d0",
+        "description": "",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "Accounts",
+            "description": "",
+            "item": [
+                {
+                    "name": "Create an account",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/register",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/register"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Sara\",\"email\":\"sara@example.test\",\"password\":\"ExamplePassword123\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"message\":\"Account created.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The email has already been taken.\",\"errors\":{\"email\":[\"The email has already been taken.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Sign in and issue a bearer token",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/login",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/login"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\":\"sara@example.test\",\"password\":\"ExamplePassword123\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"token\":\"example-token\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\":\"Invalid credentials.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Revoke the current token",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/logout",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/logout"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Class report batches",
+            "description": "",
+            "item": [
+                {
+                    "name": "Submit class reports\nEach class becomes one independent job on the class-reports queue.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/report-batches",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/report-batches"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"classes\":[{\"name\":\"Class A\",\"scores\":[60,80,100]}]}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 202,
+                            "body": "{\"batch_id\":\"890b38a0-301c-4959-9a28-3592c39aec40\",\"status\":\"queued\",\"total\":1,\"completed\":0,\"progress\":0,\"reports\":[{\"id\":1,\"class_name\":\"Class A\",\"status\":\"queued\",\"result\":null}]}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Read progress and one result per class\nProgress counts ready reports, including after cancellation.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/report-batches\/:batch_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/report-batches\/:batch_id",
+                            "variable": [
+                                {
+                                    "id": "batch_id",
+                                    "key": "batch_id",
+                                    "value": "890b38a0-301c-4959-9a28-3592c39aec40",
+                                    "description": "Batch UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"batch_id\":\"890b38a0-301c-4959-9a28-3592c39aec40\",\"status\":\"ready\",\"total\":1,\"completed\":1,\"progress\":100,\"reports\":[{\"id\":1,\"class_name\":\"Class A\",\"status\":\"ready\",\"result\":{\"count\":3,\"average\":80,\"highest\":100,\"lowest\":60}}]}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"message\":\"This action is unauthorized.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancel outstanding reports\nReady results are retained. Repeating a cancellation is safe.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/report-batches\/:batch_id\/cancel",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/report-batches\/:batch_id\/cancel",
+                            "variable": [
+                                {
+                                    "id": "batch_id",
+                                    "key": "batch_id",
+                                    "value": "890b38a0-301c-4959-9a28-3592c39aec40",
+                                    "description": "Batch UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"batch_id\":\"890b38a0-301c-4959-9a28-3592c39aec40\",\"status\":\"cancelled\",\"total\":1,\"completed\":0,\"progress\":0,\"reports\":[{\"id\":1,\"class_name\":\"Class A\",\"status\":\"cancelled\",\"result\":null}]}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"message\":\"This action is unauthorized.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 409,
+                            "body": "{\"message\":\"This batch has already finished.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Reports",
+            "description": "",
+            "item": [
+                {
+                    "name": "Queue a grade report",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/reports",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/reports"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"scores\":[60,80,100]}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 202,
+                            "body": "{\"id\":1,\"status\":\"queued\",\"result\":null}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The scores field is required.\",\"errors\":{\"scores\":[\"The scores field is required.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Read your report",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/reports\/:report_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/reports\/:report_id",
+                            "variable": [
+                                {
+                                    "id": "report_id",
+                                    "key": "report_id",
+                                    "value": 1,
+                                    "description": "Report ID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"id\":1,\"status\":\"ready\",\"result\":{\"count\":3,\"average\":80,\"highest\":100,\"lowest\":60}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"message\":\"This action is unauthorized.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Resource not found.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "key",
+                "type": "string"
+            }
+        ]
+    }
+}

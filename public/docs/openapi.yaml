@@ -1,0 +1,640 @@
+openapi: 3.0.3
+info:
+  title: 'Grade Reports API Documentation'
+  description: ''
+  version: 1.0.0
+servers:
+  -
+    url: 'http://127.0.0.1:8000'
+tags:
+  -
+    name: Accounts
+    description: ''
+  -
+    name: 'Class report batches'
+    description: ''
+  -
+    name: Reports
+    description: ''
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'You can retrieve your token by visiting your dashboard and clicking <b>Generate API token</b>.'
+security:
+  -
+    default: []
+paths:
+  /api/register:
+    post:
+      summary: 'Create an account'
+      operationId: createAnAccount
+      description: ''
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Account created.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Account created.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The email has already been taken.'
+                  errors:
+                    email:
+                      - 'The email has already been taken.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The email has already been taken.'
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - 'The email has already been taken.'
+                        items:
+                          type: string
+      tags:
+        - Accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Display name.'
+                  example: Sara
+                email:
+                  type: string
+                  description: 'Email address.'
+                  example: sara@example.test
+                password:
+                  type: string
+                  description: 'Password (8 to 72 characters).'
+                  example: ExamplePassword123
+              required:
+                - name
+                - email
+                - password
+      security: []
+  /api/login:
+    post:
+      summary: 'Sign in and issue a bearer token'
+      operationId: signInAndIssueABearerToken
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  token: example-token
+                properties:
+                  token:
+                    type: string
+                    example: example-token
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Invalid credentials.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Invalid credentials.'
+      tags:
+        - Accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: 'Registered email.'
+                  example: sara@example.test
+                password:
+                  type: string
+                  description: 'Account password.'
+                  example: ExamplePassword123
+              required:
+                - email
+                - password
+      security: []
+  /api/logout:
+    post:
+      summary: 'Revoke the current token'
+      operationId: revokeTheCurrentToken
+      description: ''
+      parameters: []
+      responses:
+        204:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - Accounts
+  /api/report-batches:
+    post:
+      summary: "Submit class reports\nEach class becomes one independent job on the class-reports queue."
+      operationId: submitClassReportsEachClassBecomesOneIndependentJobOnTheClassReportsQueue
+      description: ''
+      parameters: []
+      responses:
+        202:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  batch_id: 890b38a0-301c-4959-9a28-3592c39aec40
+                  status: queued
+                  total: 1
+                  completed: 0
+                  progress: 0
+                  reports:
+                    -
+                      id: 1
+                      class_name: 'Class A'
+                      status: queued
+                      result: null
+                properties:
+                  batch_id:
+                    type: string
+                    example: 890b38a0-301c-4959-9a28-3592c39aec40
+                  status:
+                    type: string
+                    example: queued
+                  total:
+                    type: integer
+                    example: 1
+                  completed:
+                    type: integer
+                    example: 0
+                  progress:
+                    type: integer
+                    example: 0
+                  reports:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        class_name: 'Class A'
+                        status: queued
+                        result: null
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        class_name:
+                          type: string
+                          example: 'Class A'
+                        status:
+                          type: string
+                          example: queued
+                        result:
+                          type: string
+                          example: null
+                          nullable: true
+      tags:
+        - 'Class report batches'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                classes:
+                  type: array
+                  description: 'Between 1 and 20 classes.'
+                  example:
+                    -
+                      name: 'Class A'
+                      scores:
+                        - 60
+                        - 80
+                        - 100
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: 'Unique class name.'
+                        example: 'Class A'
+                      scores:
+                        type: array
+                        description: 'Scores between 0 and 100.'
+                        example:
+                          - 60
+                          - 80
+                          - 100
+                        items:
+                          type: integer
+                    required:
+                      - name
+                      - scores
+              required:
+                - classes
+  '/api/report-batches/{batch_id}':
+    get:
+      summary: "Read progress and one result per class\nProgress counts ready reports, including after cancellation."
+      operationId: readProgressAndOneResultPerClassProgressCountsReadyReportsIncludingAfterCancellation
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  batch_id: 890b38a0-301c-4959-9a28-3592c39aec40
+                  status: ready
+                  total: 1
+                  completed: 1
+                  progress: 100
+                  reports:
+                    -
+                      id: 1
+                      class_name: 'Class A'
+                      status: ready
+                      result:
+                        count: 3
+                        average: 80
+                        highest: 100
+                        lowest: 60
+                properties:
+                  batch_id:
+                    type: string
+                    example: 890b38a0-301c-4959-9a28-3592c39aec40
+                  status:
+                    type: string
+                    example: ready
+                  total:
+                    type: integer
+                    example: 1
+                  completed:
+                    type: integer
+                    example: 1
+                  progress:
+                    type: integer
+                    example: 100
+                  reports:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        class_name: 'Class A'
+                        status: ready
+                        result:
+                          count: 3
+                          average: 80
+                          highest: 100
+                          lowest: 60
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        class_name:
+                          type: string
+                          example: 'Class A'
+                        status:
+                          type: string
+                          example: ready
+                        result:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                              example: 3
+                            average:
+                              type: integer
+                              example: 80
+                            highest:
+                              type: integer
+                              example: 100
+                            lowest:
+                              type: integer
+                              example: 60
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+      tags:
+        - 'Class report batches'
+    parameters:
+      -
+        in: path
+        name: batch_id
+        description: 'Batch UUID.'
+        example: 890b38a0-301c-4959-9a28-3592c39aec40
+        required: true
+        schema:
+          type: string
+  '/api/report-batches/{batch_id}/cancel':
+    post:
+      summary: "Cancel outstanding reports\nReady results are retained. Repeating a cancellation is safe."
+      operationId: cancelOutstandingReportsReadyResultsAreRetainedRepeatingACancellationIsSafe
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  batch_id: 890b38a0-301c-4959-9a28-3592c39aec40
+                  status: cancelled
+                  total: 1
+                  completed: 0
+                  progress: 0
+                  reports:
+                    -
+                      id: 1
+                      class_name: 'Class A'
+                      status: cancelled
+                      result: null
+                properties:
+                  batch_id:
+                    type: string
+                    example: 890b38a0-301c-4959-9a28-3592c39aec40
+                  status:
+                    type: string
+                    example: cancelled
+                  total:
+                    type: integer
+                    example: 1
+                  completed:
+                    type: integer
+                    example: 0
+                  progress:
+                    type: integer
+                    example: 0
+                  reports:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        class_name: 'Class A'
+                        status: cancelled
+                        result: null
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        class_name:
+                          type: string
+                          example: 'Class A'
+                        status:
+                          type: string
+                          example: cancelled
+                        result:
+                          type: string
+                          example: null
+                          nullable: true
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        409:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This batch has already finished.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This batch has already finished.'
+      tags:
+        - 'Class report batches'
+    parameters:
+      -
+        in: path
+        name: batch_id
+        description: 'Batch UUID.'
+        example: 890b38a0-301c-4959-9a28-3592c39aec40
+        required: true
+        schema:
+          type: string
+  /api/reports:
+    post:
+      summary: 'Queue a grade report'
+      operationId: queueAGradeReport
+      description: ''
+      parameters: []
+      responses:
+        202:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 1
+                  status: queued
+                  result: null
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  status:
+                    type: string
+                    example: queued
+                  result:
+                    type: string
+                    example: null
+                    nullable: true
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The scores field is required.'
+                  errors:
+                    scores:
+                      - 'The scores field is required.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The scores field is required.'
+                  errors:
+                    type: object
+                    properties:
+                      scores:
+                        type: array
+                        example:
+                          - 'The scores field is required.'
+                        items:
+                          type: string
+      tags:
+        - Reports
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scores:
+                  type: array
+                  description: 'List of 1 to 1000 scores from 0 to 100.'
+                  example:
+                    - 60
+                    - 80
+                    - 100
+                  items:
+                    type: integer
+              required:
+                - scores
+  '/api/reports/{report_id}':
+    get:
+      summary: 'Read your report'
+      operationId: readYourReport
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 1
+                  status: ready
+                  result:
+                    count: 3
+                    average: 80
+                    highest: 100
+                    lowest: 60
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  status:
+                    type: string
+                    example: ready
+                  result:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                        example: 3
+                      average:
+                        type: integer
+                        example: 80
+                      highest:
+                        type: integer
+                        example: 100
+                      lowest:
+                        type: integer
+                        example: 60
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Resource not found.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Resource not found.'
+      tags:
+        - Reports
+    parameters:
+      -
+        in: path
+        name: report_id
+        description: 'Report ID.'
+        example: 1
+        required: true
+        schema:
+          type: integer
